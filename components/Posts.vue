@@ -2,7 +2,7 @@
   <v-card flat>
     <v-layout row wrap>
       <v-flex v-for="(title, index) in titles" :key="index">
-        <v-card flat hover class="white pb-2 mb-1 pl-2">
+        <v-card flat hover class="white pb-2 mb-1 pl-2" v-intersect="infiniteScrolling">
           <v-layout>
             <v-flex xs10>
               <div class="py-2">{{ title.body }}</div>
@@ -11,10 +11,6 @@
         </v-card>
       </v-flex>
     </v-layout>
-    <infinite-loading
-      spinner="spiral"
-      @infinite="infiniteScroll"
-    ></infinite-loading>
   </v-card>
 </template>
 
@@ -27,6 +23,7 @@ export default {
     return {
       titles: [],
       page: 1,
+      isEnd: false,
     };
   },
   computed: {
@@ -42,6 +39,20 @@ export default {
       const response = await axios.get(this.url);
       this.titles = response.data;
     },
+    infiniteScrolling(entries, observer, isIntersecting) {
+      if (this.isEnd) return;
+      this.page++;
+      axios
+        .get(this.url)
+        .then(response => {
+          if (response.data.length > 1) {
+            response.data.forEach(item => this.titles.push(item));
+          } else {
+            this.isEnd = true;
+          }
+        })
+        .catch(err => { console.log(err)});
+    }
   },
 };
 </script>
